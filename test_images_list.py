@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
+import sys
 import torch
 from options.train_options import TrainOptions
 from loaders import aligned_data_loader
@@ -21,10 +22,21 @@ BATCH_SIZE = 1
 
 opt = TrainOptions().parse()  # set CUDA_VISIBLE_DEVICES before import torch
 
-video_list = 'test_data/test_davis_video_list.txt'
+folder = opt.indir
+output_f = 'temp.txt'
+
+image_list = [os.path.join(folder, x)
+              for x in os.listdir(folder)
+              if x.endswith('.jpg') or x.endswith('.png')]
+
+with open(output_f, 'w') as f:
+    for item in image_list:
+        f.write(f'{item}\n')
+
+video_list = output_f # 'test_data/test_pt_list.txt'
 
 eval_num_threads = 2
-video_data_loader = aligned_data_loader.DAVISDataLoader(video_list, BATCH_SIZE)
+video_data_loader = aligned_data_loader.GenericDataLoader(video_list, BATCH_SIZE)
 video_dataset = video_data_loader.load_data()
 print('========================= Video dataset #images = %d =========' %
       len(video_data_loader))

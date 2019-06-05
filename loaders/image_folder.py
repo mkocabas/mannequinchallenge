@@ -20,7 +20,8 @@ import os
 import os.path
 from skimage import transform
 from skimage.io import imread
-
+from torchvision.transforms.functional import pad, resize
+from PIL import Image
 
 keypoints_simple_dict = {0: 0, 1: 1, 2: 2, 3: 2, 4: 3, 5: 3, 6: 4, 7: 4,
                          8: 5, 9: 5, 10: 6, 11: 6, 12: 7, 13: 7, 14: 8, 15: 8, 16: 9, 17: 9}
@@ -264,6 +265,61 @@ class DAVISImageFolder(data.Dataset):
         img = transform.resize(img, (self.resized_height, self.resized_width))
 
         return img
+
+    def __getitem__(self, index):
+        targets_1 = {}
+
+        h5_path = self.img_list[index].rstrip()
+        img = self.load_imgs(h5_path)
+
+        final_img = torch.from_numpy(np.ascontiguousarray(
+            img).transpose(2, 0, 1)).contiguous().float()
+
+        targets_1['img_1_path'] = h5_path
+
+        return final_img, targets_1
+
+    def __len__(self):
+        return len(self.img_list)
+
+
+class ImageFolder(data.Dataset):
+
+    def __init__(self, list_path):
+        img_list = make_dataset(list_path)
+        if len(img_list) == 0:
+            raise(RuntimeError('Found 0 images in: ' + list_path))
+        self.list_path = list_path
+        self.img_list = img_list
+
+        self.resized_height = 288
+        self.resized_width = 512
+
+        self.use_pp = True
+
+    def load_imgs(self, img_path):
+        img = Image.open(img_path)
+        img = self.crop(img, size=[self.resized_height, self.resized_width])
+        # img = center_crop(img, [self.resized_height, self.resized_width])
+        img = np.float32(img) / 255.0
+
+        # img = imread(img_path)
+        # img = center_crop(img, [self.resized_height, self.resized_width])
+        # img = np.float32(img)/255.0
+        # img = transform.resize(img, (self.resized_height, self.resized_width))
+
+        return img
+
+    def crop(self, img, size):
+        img = resize(img, size[0])
+        w, h = img.size
+        img = pad(img, padding=((w-size[1])//2,0))
+        w, h = img.size
+        if (h,w) != size:
+            img = resize(img, size)
+        return img
+
+
 
     def __getitem__(self, index):
         targets_1 = {}

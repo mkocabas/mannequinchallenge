@@ -19,6 +19,22 @@ from options.train_options import TrainOptions
 from loaders import aligned_data_loader
 from models import pix2pix_model
 
+def extract_video(vid_filename):
+    cmd = [
+        'ffmpeg',
+        '-i', vid_filename,
+        'temp/%06d.png',
+        '-threads', '4'
+    ]
+
+    print(' '.join(cmd))
+    try:
+        subprocess.call(cmd)
+    except OSError:
+        print('OSError')
+
+    # 'ffmpeg -i friends_will_hates_rachel_brad_pitt.mp4 out/%06d.png -threads 4'
+
 def make_video(output_path, img_dir, fps=25):
     """
     output_path is the final mp4 name
@@ -50,7 +66,13 @@ BATCH_SIZE = 1
 
 opt = TrainOptions().parse()  # set CUDA_VISIBLE_DEVICES before import torch
 
-folder = opt.indir
+vid_filename = opt.indir
+out_vid_filename = 'out.mp4'
+folder = 'temp'
+
+os.makedirs(folder, exist_ok=True)
+
+extract_video(vid_filename)
 
 output_f = 'temp.txt'
 
@@ -84,7 +106,8 @@ print(
 print('TESTING ON VIDEO')
 
 model.switch_to_eval()
-save_path = 'test_data/viz_predictions/'
+save_path = 'out_temp'
+os.makedirs(save_path, exist_ok=True)
 print('save_path %s' % save_path)
 
 for i, data in enumerate(video_dataset):
@@ -92,6 +115,9 @@ for i, data in enumerate(video_dataset):
     targets = data[1]
     model.run_and_save_DAVIS(stacked_img, targets, save_path)
 
-folder_name = folder.split("/")[-2]
+# folder_name = folder.split("/")[-2]
 
-make_video(os.path.join(save_path, f'{folder_name}.mp4'), os.path.join(save_path, folder_name))
+make_video(out_vid_filename, 'temp')
+
+os.removedirs('temp')
+os.removedirs('out_temp')

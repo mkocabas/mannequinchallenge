@@ -45,7 +45,7 @@ def make_video(output_path, img_dir, fps=25):
         '-y',
         '-threads', '16',
         '-framerate', str(fps),
-        '-i', '{img_dir}/%*.jpg'.format(img_dir=img_dir),
+        '-i', '{img_dir}/%*.png'.format(img_dir=img_dir),
         '-profile:v', 'baseline',
         '-level', '3.0',
         '-c:v', 'libx264',
@@ -72,7 +72,7 @@ folder = 'temp'
 
 os.makedirs(folder, exist_ok=True)
 
-extract_video(vid_filename)
+# extract_video(vid_filename)
 
 output_f = 'temp.txt'
 
@@ -113,11 +113,11 @@ print('save_path %s' % save_path)
 for i, data in enumerate(video_dataset):
     stacked_img = data[0]
     targets = data[1]
-    model.run_and_save_DAVIS(stacked_img, targets, save_path)
+    model.run_and_save_VIDEOS(stacked_img, targets, save_path)
 
 # folder_name = folder.split("/")[-2]
 
-make_video(out_vid_filename, 'temp')
+make_video(out_vid_filename, save_path)
 
 os.removedirs('temp')
 os.removedirs('out_temp')
